@@ -51,6 +51,7 @@ func main() {
 
 	r := router.New()
 	r.Register(commands.PingCommand, middleware.Chain(commands.Ping, middleware.Recover, middleware.GuildOnly))
+	r.Register(commands.SyncServerCommand, middleware.Chain(commands.SyncServerHandler(db), middleware.Recover, middleware.GuildOnly))
 	dg.AddHandler(r.Handle)
 
 	if cfg.AppID != "" {

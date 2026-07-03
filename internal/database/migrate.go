@@ -64,6 +64,42 @@ func Migrations() []Migration {
 				created_at TEXT NOT NULL DEFAULT (datetime('now'))
 			)`,
 		},
+		{
+			Version: 2,
+			Name:    "add_guild_columns",
+			Up: `ALTER TABLE guilds ADD COLUMN name TEXT NOT NULL DEFAULT '';
+			ALTER TABLE guilds ADD COLUMN owner_id TEXT NOT NULL DEFAULT '';
+			ALTER TABLE guilds ADD COLUMN member_count INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE guilds ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));`,
+		},
+		{
+			Version: 2,
+			Name:    "add_user_columns",
+			Up: `ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT '';
+			ALTER TABLE users ADD COLUMN global_name TEXT NOT NULL DEFAULT '';
+			ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT '';
+			ALTER TABLE users ADD COLUMN bot INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE users ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));`,
+		},
+		{
+			Version: 2,
+			Name:    "add_channel_columns",
+			Up: `ALTER TABLE channels ADD COLUMN guild_id TEXT NOT NULL DEFAULT '';
+			ALTER TABLE channels ADD COLUMN name TEXT NOT NULL DEFAULT '';
+			ALTER TABLE channels ADD COLUMN type INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE channels ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE channels ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));`,
+		},
+		{
+			Version: 2,
+			Name:    "add_role_columns",
+			Up: `ALTER TABLE roles ADD COLUMN guild_id TEXT NOT NULL DEFAULT '';
+			ALTER TABLE roles ADD COLUMN name TEXT NOT NULL DEFAULT '';
+			ALTER TABLE roles ADD COLUMN color INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE roles ADD COLUMN position INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE roles ADD COLUMN managed INTEGER NOT NULL DEFAULT 0;
+			ALTER TABLE roles ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));`,
+		},
 	}
 }
 
