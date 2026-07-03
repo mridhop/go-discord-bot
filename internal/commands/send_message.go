@@ -9,8 +9,9 @@ import (
 )
 
 type sendMessagePayload struct {
-	Content string            `json:"content"`
-	Embed   *sendMessageEmbed `json:"embed"`
+	Content    string                      `json:"content"`
+	Embed      *sendMessageEmbed           `json:"embed"`
+	Components []sendMessageComponentRow   `json:"components"`
 }
 
 type sendMessageEmbed struct {
@@ -47,6 +48,45 @@ type embedField struct {
 	Inline bool   `json:"inline,omitempty"`
 }
 
+type sendMessageComponentRow struct {
+	Type       int               `json:"type"`
+	Components []json.RawMessage `json:"components"`
+}
+
+type sendMessageButton struct {
+	Type     int                        `json:"type"`
+	Style    int                        `json:"style"`
+	Label    string                     `json:"label"`
+	CustomID string                     `json:"custom_id,omitempty"`
+	URL      string                     `json:"url,omitempty"`
+	Disabled bool                       `json:"disabled,omitempty"`
+	Emoji    *sendMessageComponentEmoji `json:"emoji,omitempty"`
+}
+
+type sendMessageSelectMenu struct {
+	Type        int                        `json:"type"`
+	CustomID    string                     `json:"custom_id"`
+	Placeholder string                     `json:"placeholder,omitempty"`
+	MinValues   *int                       `json:"min_values,omitempty"`
+	MaxValues   int                        `json:"max_values,omitempty"`
+	Disabled    bool                       `json:"disabled,omitempty"`
+	Options     []sendMessageSelectOption  `json:"options,omitempty"`
+}
+
+type sendMessageSelectOption struct {
+	Label       string                     `json:"label"`
+	Value       string                     `json:"value"`
+	Description string                     `json:"description,omitempty"`
+	Emoji       *sendMessageComponentEmoji `json:"emoji,omitempty"`
+	Default     bool                       `json:"default,omitempty"`
+}
+
+type sendMessageComponentEmoji struct {
+	Name     string `json:"name,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Animated bool   `json:"animated,omitempty"`
+}
+
 var SendMessageCommand = &discordgo.ApplicationCommand{
 	Name:        "send-message",
 	Description: "Sends a message with optional embed using a JSON payload",
@@ -80,9 +120,19 @@ func SendMessageHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	if payload.Content == "" && payload.Embed == nil {
-		respondEphemeral(s, i, "Message must have `content` or an `embed`.")
+	if payload.Content == "" && payload.Embed == nil && len(payload.Components) == 0 {
+		respondEphemeral(s, i, "Message must have `content`, an `embed`, or `components`.")
 		return
+	}
+
+	var msgComponents []discordgo.MessageComponent
+	if len(payload.Components) > 0 {
+		var compErr error
+		msgComponents, compErr = convertComponents(payload.Components)
+		if compErr != nil {
+			respondEphemeral(s, i, fmt.Sprintf("Invalid components: %v", compErr))
+			return
+		}
 	}
 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -102,6 +152,8 @@ func SendMessageHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if payload.Embed != nil {
 		msg.Embeds = []*discordgo.MessageEmbed{convertEmbed(payload.Embed)}
 	}
+
+	msg.Components = msgComponents
 
 	if replyID := data.GetOption("message-id"); replyID != nil {
 		msg.Reference = &discordgo.MessageReference{
@@ -171,6 +223,87 @@ func convertEmbed(e *sendMessageEmbed) *discordgo.MessageEmbed {
 	}
 
 	return embed
+}
+
+func convertComponents(rows []sendMessageComponentRow) ([]discordgo.MessageComponent, error) {
+	result := make([]discordgo.MessageComponent, 0, len(rows))
+	for _, row := range rows {
+		ar := &discordgo.ActionsRow{
+			Components: make([]discordgo.MessageComponent, 0, len(row.Components)),
+		}
+		for _, raw := range row.Components {
+			var typePeek struct {
+				Type int `json:"type"`
+			}
+			if err := json.Unmarshal(raw, &typePeek); err != nil {
+				return nil, fmt.Errorf("failed to parse component: %w", err)
+			}
+			switch typePeek.Type {
+			case 2:
+				var btn sendMessageButton
+				if err := json.Unmarshal(raw, &btn); err != nil {
+					return nil, fmt.Errorf("failed to parse button: %w", err)
+				}
+				ar.Components = append(ar.Components, convertButton(&btn))
+			case 3, 5, 6, 7, 8:
+				var sel sendMessageSelectMenu
+				if err := json.Unmarshal(raw, &sel); err != nil {
+					return nil, fmt.Errorf("failed to parse select menu: %w", err)
+				}
+				ar.Components = append(ar.Components, convertSelectMenu(&sel))
+			default:
+				return nil, fmt.Errorf("unknown component type: %d", typePeek.Type)
+			}
+		}
+		result = append(result, ar)
+	}
+	return result, nil
+}
+
+func convertButton(b *sendMessageButton) *discordgo.Button {
+	btn := &discordgo.Button{
+		Style:    discordgo.ButtonStyle(b.Style),
+		Label:    b.Label,
+		CustomID: b.CustomID,
+		URL:      b.URL,
+		Disabled: b.Disabled,
+	}
+	if b.Emoji != nil {
+		btn.Emoji = &discordgo.ComponentEmoji{
+			Name:     b.Emoji.Name,
+			ID:       b.Emoji.ID,
+			Animated: b.Emoji.Animated,
+		}
+	}
+	return btn
+}
+
+func convertSelectMenu(s *sendMessageSelectMenu) *discordgo.SelectMenu {
+	menu := &discordgo.SelectMenu{
+		MenuType:    discordgo.SelectMenuType(s.Type),
+		CustomID:    s.CustomID,
+		Placeholder: s.Placeholder,
+		MinValues:   s.MinValues,
+		MaxValues:   s.MaxValues,
+		Disabled:    s.Disabled,
+	}
+	for _, opt := range s.Options {
+		o := discordgo.SelectMenuOption{
+			Label:       opt.Label,
+			Value:       opt.Value,
+			Description: opt.Description,
+			Default:     opt.Default,
+		}
+		if opt.Emoji != nil {
+			o.Emoji = &discordgo.ComponentEmoji{
+				Name:     opt.Emoji.Name,
+				ID:       opt.Emoji.ID,
+				Animated: opt.Emoji.Animated,
+			}
+		}
+		menu.Options = append(menu.Options, o)
+	}
+	return menu
 }
 
 func respondEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
