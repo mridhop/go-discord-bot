@@ -6,16 +6,23 @@ import (
 )
 
 type Config struct {
-	AppID    string
-	BotToken string
-	GuildID  string
+	AppID        string
+	BotToken     string
+	GuildID      string
+	DatabasePath string
 }
 
 func Load() (*Config, error) {
+	databasePath := os.Getenv("DATABASE_PATH")
+	if databasePath == "" {
+		databasePath = "bot.db"
+	}
+
 	cfg := &Config{
-		AppID:    os.Getenv("APP_ID"),
-		BotToken: os.Getenv("DISCORD_BOT_TOKEN"),
-		GuildID:  os.Getenv("DISCORD_GUILD_ID"),
+		AppID:        os.Getenv("APP_ID"),
+		BotToken:     os.Getenv("DISCORD_BOT_TOKEN"),
+		GuildID:      os.Getenv("DISCORD_GUILD_ID"),
+		DatabasePath: databasePath,
 	}
 
 	if cfg.BotToken == "" {

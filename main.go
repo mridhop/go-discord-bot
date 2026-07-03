@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mridhop/go-discord-bot/internal/commands"
 	"github.com/mridhop/go-discord-bot/internal/config"
+	"github.com/mridhop/go-discord-bot/internal/database"
 	"github.com/mridhop/go-discord-bot/internal/logger"
 	"github.com/mridhop/go-discord-bot/internal/middleware"
 	"github.com/mridhop/go-discord-bot/internal/router"
@@ -23,6 +24,18 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("failed to load config", "error", err)
+		os.Exit(1)
+	}
+
+	db, err := database.Open(cfg.DatabasePath)
+	if err != nil {
+		slog.Error("failed to open database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	if err := database.Migrate(db); err != nil {
+		slog.Error("failed to run database migrations", "error", err)
 		os.Exit(1)
 	}
 
