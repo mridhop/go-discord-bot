@@ -132,6 +132,17 @@ func Migrations() []Migration {
 			Name:    "add_sticky_cooldown_id",
 			Up: `ALTER TABLE sticky_messages ADD COLUMN cooldown_id INTEGER NOT NULL DEFAULT 0`,
 		},
+		{
+			Version: 5,
+			Name:    "create_guild_configs",
+			Up: `CREATE TABLE IF NOT EXISTS guild_configs (
+				guild_id           TEXT NOT NULL PRIMARY KEY REFERENCES guilds(guild_id),
+				welcome_enabled    INTEGER NOT NULL DEFAULT 0,
+				welcome_channel_id TEXT NOT NULL DEFAULT '',
+				welcome_message    TEXT NOT NULL DEFAULT '',
+				updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
+			)`,
+		},
 	}
 }
 
