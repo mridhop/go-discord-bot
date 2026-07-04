@@ -11,9 +11,9 @@ import (
 )
 
 type sendMessagePayload struct {
-	Content    string                      `json:"content"`
-	Embed      *sendMessageEmbed           `json:"embed"`
-	Components []sendMessageComponentRow   `json:"components"`
+	Content    string                    `json:"content"`
+	Embeds     []sendMessageEmbed        `json:"embeds"`
+	Components []sendMessageComponentRow `json:"components"`
 }
 
 type embedColor int
@@ -145,7 +145,7 @@ func SendMessageHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 
-	if payload.Content == "" && payload.Embed == nil && len(payload.Components) == 0 {
+	if payload.Content == "" && len(payload.Embeds) == 0 && len(payload.Components) == 0 {
 		respondEphemeral(s, i, "Message must have `content`, an `embed`, or `components`.")
 		return
 	}
@@ -174,8 +174,9 @@ func SendMessageHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	msg := &discordgo.MessageSend{
 		Content: payload.Content,
 	}
-	if payload.Embed != nil {
-		msg.Embeds = []*discordgo.MessageEmbed{convertEmbed(payload.Embed)}
+	for _, e := range payload.Embeds {
+		e := e
+		msg.Embeds = append(msg.Embeds, convertEmbed(&e))
 	}
 
 	msg.Components = msgComponents
