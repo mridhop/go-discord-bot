@@ -63,6 +63,10 @@ func main() {
 	r.RegisterComponent("embed_demo_cancel", middleware.Chain(commands.EmbedDemoCancelHandler, middleware.Recover))
 
 	dg.AddHandler(r.Handle)
+
+	pr := router.NewPrefixRouter("!")
+	pr.Register("ping", middleware.PrefixChain(commands.PrefixPing, middleware.PrefixRecover, middleware.PrefixGuildOnly))
+	dg.AddHandler(pr.Handle())
 	dg.AddHandler(commands.GuildDeleteHandler(db))
 	dg.AddHandler(commands.StickyMessageHandler(db))
 	dg.AddHandler(commands.WelcomeMemberHandler(db))
