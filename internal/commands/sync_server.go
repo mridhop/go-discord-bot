@@ -44,6 +44,10 @@ func SyncServerHandler(db *sql.DB) middleware.CommandHandler {
 			slog.Error("failed to upsert members", "error", err)
 		}
 
+		if err := database.DeleteChannelsByGuild(db, guildID); err != nil {
+			slog.Error("failed to purge channels", "error", err)
+		}
+
 		channels, err := s.GuildChannels(guildID)
 		if err != nil {
 			editResponse(s, i, fmt.Sprintf("Failed to fetch channels: %v", err))
@@ -56,6 +60,10 @@ func SyncServerHandler(db *sql.DB) middleware.CommandHandler {
 				continue
 			}
 			channelCount++
+		}
+
+		if err := database.DeleteRolesByGuild(db, guildID); err != nil {
+			slog.Error("failed to purge roles", "error", err)
 		}
 
 		roles, err := s.GuildRoles(guildID)
