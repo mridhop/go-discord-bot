@@ -8,6 +8,8 @@ A Discord bot built with [discordgo](https://github.com/bwmarrin/discordgo) feat
 - **`/sync-server`** — Syncs all guild members, channels, and roles to the local SQLite database
 - **`/embed-demo`** — Interactive embed with confirm/cancel buttons demonstrating Discord message components
 - **`/send-message`** — Send rich messages (embeds, buttons, select menus) via a JSON payload, with optional reply targeting
+- **`/get-message-as-json`** — Fetch a bot message by ID and download it as a JSON payload (compatible with `/send-message` and `/edit-message`)
+- **`/edit-message`** — Edit an existing bot message by ID using the same JSON payload format
 
 ## Prerequisites
 
@@ -73,7 +75,9 @@ go test ./...       # run tests
 │   │   ├── ping.go            # /ping
 │   │   ├── sync_server.go     # /sync-server
 │   │   ├── send_message.go    # /send-message
-│   │   └── embed_demo.go      # /embed-demo + button handlers
+│   │   ├── embed_demo.go      # /embed-demo + button handlers
+│   │   ├── get_message_json.go # /get-message-as-json
+│   │   └── edit_message.go    # /edit-message
 │   ├── config/                # env-based configuration
 │   ├── database/              # SQLite (WAL, foreign keys, migrations)
 │   ├── logger/                # slog + discordgo log bridge
@@ -83,25 +87,25 @@ go test ./...       # run tests
 └── .gitignore
 ```
 
-## `/send-message` Format
+## JSON Payload Format
 
-The `/send-message` command takes a JSON payload that describes the message to send. The top-level object has three optional fields (at least one required):
+The `/send-message` and `/edit-message` commands share the same JSON payload format. The `/get-message-as-json` command exports bot messages in this format. The top-level object has three optional fields (at least one required):
 
 ### Top-level
 
 ```json
 {
   "content": "plain text content",
-  "embed": { ... },
+  "embeds": [{ ... }],
   "components": [ ... ]
 }
 ```
 
-### Embed
+### Embeds
 
 ```json
 {
-  "embed": {
+  "embeds": [{
     "title": "Title",
     "description": "Description text",
     "url": "https://example.com",
@@ -115,7 +119,7 @@ The `/send-message` command takes a JSON payload that describes the message to s
       { "name": "Field 1", "value": "Value 1", "inline": true },
       { "name": "Field 2", "value": "Value 2", "inline": false }
     ]
-  }
+  }]
 }
 ```
 
@@ -163,7 +167,7 @@ Each action row contains one or more components (buttons or select menus):
 ```json
 {
   "content": "Check this out!",
-  "embed": {
+  "embeds": [{
     "title": "Announcement",
     "description": "Something important happened.",
     "color": 3447003,
@@ -172,7 +176,7 @@ Each action row contains one or more components (buttons or select menus):
       { "name": "Time", "value": "Now", "inline": true },
       { "name": "Place", "value": "Here", "inline": true }
     ]
-  },
+  }],
   "components": [
     {
       "type": 1,
@@ -187,10 +191,25 @@ Each action row contains one or more components (buttons or select menus):
 
 ### Command Options
 
+**`/send-message`**
+
 | Option | Required | Description |
 |---|---|---|
 | `json` | Yes | JSON payload as described above |
 | `message-id` | No | ID of a message to reply to (creates a reply thread) |
+
+**`/edit-message`**
+
+| Option | Required | Description |
+|---|---|---|
+| `json` | Yes | JSON payload with content, embeds, and components |
+| `message-id` | Yes | ID of the bot message to edit |
+
+**`/get-message-as-json`**
+
+| Option | Required | Description |
+|---|---|---|
+| `message-id` | Yes | ID of the bot message to fetch |
 
 ## Architecture
 
