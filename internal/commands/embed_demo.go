@@ -8,8 +8,9 @@ import (
 )
 
 var EmbedDemoCommand = &discordgo.ApplicationCommand{
-	Name:        "embed-demo",
-	Description: "Sends an embed with interactive buttons",
+	Name:                     "embed-demo",
+	Description:              "Sends an embed with interactive buttons",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionSendMessages),
 }
 
 func EmbedDemoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {

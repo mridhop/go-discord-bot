@@ -10,8 +10,9 @@ import (
 )
 
 var GetMessageJSONCommand = &discordgo.ApplicationCommand{
-	Name:        "get-message-as-json",
-	Description: "Gets a bot message as a JSON payload for editing",
+	Name:                     "get-message-as-json",
+	Description:              "Gets a bot message as a JSON payload for editing",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 	Options: []*discordgo.ApplicationCommandOption{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,

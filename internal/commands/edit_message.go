@@ -15,8 +15,9 @@ type editMessagePayload struct {
 }
 
 var EditMessageCommand = &discordgo.ApplicationCommand{
-	Name:        "edit-message",
-	Description: "Edits a bot message by its ID using a JSON payload",
+	Name:                     "edit-message",
+	Description:              "Edits a bot message by its ID using a JSON payload",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 	Options: []*discordgo.ApplicationCommandOption{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,

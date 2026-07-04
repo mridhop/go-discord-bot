@@ -7,8 +7,9 @@ import (
 )
 
 var PingCommand = &discordgo.ApplicationCommand{
-	Name:        "ping",
-	Description: "Replies with Pong!",
+	Name:                     "ping",
+	Description:              "Replies with Pong!",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionSendMessages),
 }
 
 func Ping(s *discordgo.Session, i *discordgo.InteractionCreate) {

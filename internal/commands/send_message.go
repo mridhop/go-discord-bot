@@ -113,8 +113,9 @@ type sendMessageComponentEmoji struct {
 }
 
 var SendMessageCommand = &discordgo.ApplicationCommand{
-	Name:        "send-message",
-	Description: "Sends a message with optional embed using a JSON payload",
+	Name:                     "send-message",
+	Description:              "Sends a message with optional embed using a JSON payload",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 	Options: []*discordgo.ApplicationCommandOption{
 		{
 			Type:        discordgo.ApplicationCommandOptionString,

@@ -11,8 +11,9 @@ import (
 )
 
 var WelcomeCommand = &discordgo.ApplicationCommand{
-	Name:        "welcome",
-	Description: "Manage welcome messages for new members",
+	Name:                     "welcome",
+	Description:              "Manage welcome messages for new members",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageGuild),
 	Options: []*discordgo.ApplicationCommandOption{
 		{
 			Name:        "set",

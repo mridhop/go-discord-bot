@@ -11,8 +11,9 @@ import (
 )
 
 var SyncServerCommand = &discordgo.ApplicationCommand{
-	Name:        "sync-server",
-	Description: "Sync all guild members, channels, and roles to the database",
+	Name:                     "sync-server",
+	Description:              "Sync all guild members, channels, and roles to the database",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionAdministrator),
 }
 
 func SyncServerHandler(db *sql.DB) middleware.CommandHandler {

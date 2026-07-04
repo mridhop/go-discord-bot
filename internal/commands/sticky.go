@@ -12,8 +12,9 @@ import (
 )
 
 var StickyCommand = &discordgo.ApplicationCommand{
-	Name:        "sticky",
-	Description: "Manage a sticky message that always stays at the bottom of the channel",
+	Name:                     "sticky",
+	Description:              "Manage a sticky message that always stays at the bottom of the channel",
+	DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 	Options: []*discordgo.ApplicationCommandOption{
 		{
 			Name:        "set",
