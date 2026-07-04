@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -14,11 +16,34 @@ type sendMessagePayload struct {
 	Components []sendMessageComponentRow   `json:"components"`
 }
 
+type embedColor int
+
+func (c *embedColor) UnmarshalJSON(data []byte) error {
+	var i int
+	if err := json.Unmarshal(data, &i); err == nil {
+		*c = embedColor(i)
+		return nil
+	}
+
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return fmt.Errorf("color must be an integer or hex string")
+	}
+
+	s = strings.TrimPrefix(s, "#")
+	val, err := strconv.ParseInt(s, 16, 32)
+	if err != nil {
+		return fmt.Errorf("invalid hex color: %s", s)
+	}
+	*c = embedColor(int(val))
+	return nil
+}
+
 type sendMessageEmbed struct {
 	Title       string          `json:"title,omitempty"`
 	Description string          `json:"description,omitempty"`
 	URL         string          `json:"url,omitempty"`
-	Color       int             `json:"color,omitempty"`
+	Color       embedColor      `json:"color,omitempty"`
 	Timestamp   string          `json:"timestamp,omitempty"`
 	Footer      *embedFooter    `json:"footer,omitempty"`
 	Thumbnail   *embedMedia     `json:"thumbnail,omitempty"`
@@ -184,7 +209,7 @@ func convertEmbed(e *sendMessageEmbed) *discordgo.MessageEmbed {
 		Title:       e.Title,
 		Description: e.Description,
 		URL:         e.URL,
-		Color:       e.Color,
+		Color:       int(e.Color),
 		Timestamp:   e.Timestamp,
 	}
 
