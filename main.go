@@ -54,6 +54,8 @@ func main() {
 	r.Register(commands.SyncServerCommand, middleware.Chain(commands.SyncServerHandler(db), middleware.Recover, middleware.GuildOnly))
 	r.Register(commands.EmbedDemoCommand, middleware.Chain(commands.EmbedDemoHandler, middleware.Recover, middleware.GuildOnly))
 	r.Register(commands.SendMessageCommand, middleware.Chain(commands.SendMessageHandler, middleware.Recover, middleware.GuildOnly))
+	r.Register(commands.GetMessageJSONCommand, middleware.Chain(commands.GetMessageJSONHandler, middleware.Recover, middleware.GuildOnly))
+	r.Register(commands.EditMessageCommand, middleware.Chain(commands.EditMessageHandler, middleware.Recover, middleware.GuildOnly))
 
 	r.RegisterComponent("embed_demo_confirm", middleware.Chain(commands.EmbedDemoConfirmHandler, middleware.Recover))
 	r.RegisterComponent("embed_demo_cancel", middleware.Chain(commands.EmbedDemoCancelHandler, middleware.Recover))
