@@ -100,6 +100,38 @@ func Migrations() []Migration {
 			ALTER TABLE roles ADD COLUMN managed INTEGER NOT NULL DEFAULT 0;
 			ALTER TABLE roles ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'));`,
 		},
+		{
+			Version: 3,
+			Name:    "create_sticky_messages",
+			Up: `CREATE TABLE IF NOT EXISTS sticky_messages (
+				channel_id      TEXT PRIMARY KEY,
+				content         TEXT NOT NULL,
+				last_message_id TEXT NOT NULL DEFAULT '',
+				created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+				updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+			)`,
+		},
+		{
+			Version: 4,
+			Name:    "create_sticky_cooldowns",
+			Up: `CREATE TABLE IF NOT EXISTS sticky_cooldowns (
+				id      INTEGER PRIMARY KEY,
+				seconds INTEGER NOT NULL,
+				label   TEXT NOT NULL UNIQUE
+			);
+			INSERT OR IGNORE INTO sticky_cooldowns (id, seconds, label) VALUES
+				(0, 0, 'off'),
+				(1, 1, '1s'),
+				(2, 5, '5s'),
+				(3, 15, '15s'),
+				(4, 30, '30s'),
+				(5, 60, '1m');`,
+		},
+		{
+			Version: 4,
+			Name:    "add_sticky_cooldown_id",
+			Up: `ALTER TABLE sticky_messages ADD COLUMN cooldown_id INTEGER NOT NULL DEFAULT 0`,
+		},
 	}
 }
 

@@ -56,12 +56,14 @@ func main() {
 	r.Register(commands.SendMessageCommand, middleware.Chain(commands.SendMessageHandler, middleware.Recover, middleware.GuildOnly))
 	r.Register(commands.GetMessageJSONCommand, middleware.Chain(commands.GetMessageJSONHandler, middleware.Recover, middleware.GuildOnly))
 	r.Register(commands.EditMessageCommand, middleware.Chain(commands.EditMessageHandler, middleware.Recover, middleware.GuildOnly))
+	r.Register(commands.StickyCommand, middleware.Chain(commands.StickyHandler(db), middleware.Recover, middleware.GuildOnly))
 
 	r.RegisterComponent("embed_demo_confirm", middleware.Chain(commands.EmbedDemoConfirmHandler, middleware.Recover))
 	r.RegisterComponent("embed_demo_cancel", middleware.Chain(commands.EmbedDemoCancelHandler, middleware.Recover))
 
 	dg.AddHandler(r.Handle)
 	dg.AddHandler(commands.GuildDeleteHandler(db))
+	dg.AddHandler(commands.StickyMessageHandler(db))
 
 	if cfg.AppID != "" {
 		r.Sync(dg, cfg.AppID, cfg.GuildID)

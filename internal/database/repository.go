@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -106,6 +107,88 @@ func DeleteRolesByGuild(db *sql.DB, guildID string) error {
 	_, err := db.Exec(`DELETE FROM roles WHERE guild_id = ?`, guildID)
 	if err != nil {
 		return fmt.Errorf("delete roles for guild %s: %w", guildID, err)
+	}
+	return nil
+}
+
+func UpsertStickyMessage(db *sql.DB, channelID, content string) error {
+	_, err := db.Exec(`INSERT INTO sticky_messages (channel_id, content, last_message_id, updated_at)
+		VALUES (?, ?, '', datetime('now'))
+		ON CONFLICT(channel_id) DO UPDATE SET
+			content = excluded.content,
+			last_message_id = '',
+			updated_at = datetime('now')`,
+		channelID, content,
+	)
+	if err != nil {
+		return fmt.Errorf("upsert sticky message for channel %s: %w", channelID, err)
+	}
+	return nil
+}
+
+type StickyMessage struct {
+	Content         string
+	LastMessageID   string
+	CooldownSeconds int
+	UpdatedAt       time.Time
+}
+
+func GetStickyMessage(db *sql.DB, channelID string) (*StickyMessage, error) {
+	var m StickyMessage
+	var updatedAt string
+	err := db.QueryRow(`SELECT sm.content, sm.last_message_id, sc.seconds, sm.updated_at
+		FROM sticky_messages sm
+		JOIN sticky_cooldowns sc ON sc.id = sm.cooldown_id
+		WHERE sm.channel_id = ?`, channelID).Scan(&m.Content, &m.LastMessageID, &m.CooldownSeconds, &updatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get sticky message for channel %s: %w", channelID, err)
+	}
+	m.UpdatedAt, err = time.Parse("2006-01-02 15:04:05", updatedAt)
+	if err != nil {
+		m.UpdatedAt = time.Time{}
+	}
+	return &m, nil
+}
+
+func GetStickyCooldownByLabel(db *sql.DB, label string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT id FROM sticky_cooldowns WHERE label = ?`, label).Scan(&id)
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("invalid cooldown label: %s", label)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("get cooldown id for label %s: %w", label, err)
+	}
+	return id, nil
+}
+
+func UpdateStickyCooldown(db *sql.DB, channelID string, cooldownID int) error {
+	_, err := db.Exec(`UPDATE sticky_messages SET cooldown_id = ?, updated_at = datetime('now') WHERE channel_id = ?`,
+		cooldownID, channelID,
+	)
+	if err != nil {
+		return fmt.Errorf("update sticky cooldown for channel %s: %w", channelID, err)
+	}
+	return nil
+}
+
+func UpdateStickyLastMessageID(db *sql.DB, channelID, messageID string) error {
+	_, err := db.Exec(`UPDATE sticky_messages SET last_message_id = ?, updated_at = datetime('now') WHERE channel_id = ?`,
+		messageID, channelID,
+	)
+	if err != nil {
+		return fmt.Errorf("update sticky last_message_id for channel %s: %w", channelID, err)
+	}
+	return nil
+}
+
+func DeleteStickyMessage(db *sql.DB, channelID string) error {
+	_, err := db.Exec(`DELETE FROM sticky_messages WHERE channel_id = ?`, channelID)
+	if err != nil {
+		return fmt.Errorf("delete sticky message for channel %s: %w", channelID, err)
 	}
 	return nil
 }
