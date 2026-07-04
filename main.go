@@ -61,6 +61,7 @@ func main() {
 	r.RegisterComponent("embed_demo_cancel", middleware.Chain(commands.EmbedDemoCancelHandler, middleware.Recover))
 
 	dg.AddHandler(r.Handle)
+	dg.AddHandler(commands.GuildDeleteHandler(db))
 
 	if cfg.AppID != "" {
 		r.Sync(dg, cfg.AppID, cfg.GuildID)

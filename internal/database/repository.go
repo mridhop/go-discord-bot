@@ -93,3 +93,33 @@ func UpsertAllGuildMembers(db *sql.DB, s *discordgo.Session, guildID string) (in
 	}
 	return total, nil
 }
+
+func DeleteChannelsByGuild(db *sql.DB, guildID string) error {
+	_, err := db.Exec(`DELETE FROM channels WHERE guild_id = ?`, guildID)
+	if err != nil {
+		return fmt.Errorf("delete channels for guild %s: %w", guildID, err)
+	}
+	return nil
+}
+
+func DeleteRolesByGuild(db *sql.DB, guildID string) error {
+	_, err := db.Exec(`DELETE FROM roles WHERE guild_id = ?`, guildID)
+	if err != nil {
+		return fmt.Errorf("delete roles for guild %s: %w", guildID, err)
+	}
+	return nil
+}
+
+func DeleteGuild(db *sql.DB, guildID string) error {
+	if err := DeleteChannelsByGuild(db, guildID); err != nil {
+		return err
+	}
+	if err := DeleteRolesByGuild(db, guildID); err != nil {
+		return err
+	}
+	_, err := db.Exec(`DELETE FROM guilds WHERE guild_id = ?`, guildID)
+	if err != nil {
+		return fmt.Errorf("delete guild %s: %w", guildID, err)
+	}
+	return nil
+}
